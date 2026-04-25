@@ -1,11 +1,15 @@
 import sys
+import os
 from Compressor import Compressor
 
 if __name__ == "__main__":
     action = sys.argv[1]
+    
+    repo_root = os.path.dirname(os.path.abspath(__file__))
+    
     compressor = Compressor(
-        i_model="models/cvpr2025_image.pth.tar",
-        p_model="models/cvpr2025_video.pth.tar",
+        i_model=os.path.join(repo_root, "models/cvpr2025_image.pth.tar"),
+        p_model=os.path.join(repo_root, "models/cvpr2025_video.pth.tar"),
         device="cuda"
     )
     if action == "compress":

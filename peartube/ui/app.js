@@ -241,14 +241,18 @@ async function startViewerPlayback(targetTopic, isNeural) {
     
     const py = spawn('python3', ['cli.py', 'decompress', binPath, mp4Path], { cwd: repoRoot })
     
-    py.stdout.on('data', (data) => console.log(`Python stdout: ${data}`));
-    py.stderr.on('data', (data) => console.error(`Python stderr: ${data}`));
+    let pyErr = '';
+    py.stderr.on('data', (data) => {
+      pyErr += data.toString();
+      console.error(`Python stderr: ${data}`);
+    });
+    py.stdout.on('data', (data) => console.log(`Python: ${data.toString()}`));
     
     py.on('close', (code) => {
       progressBar.setAttribute('value', 100)
       if (code !== 0) {
-        console.error(`Python process exited with code ${code}`);
-        alert(`Failed to decode neural video. Check terminal for Python errors (code ${code}).`)
+        console.error(`Python process exited with code ${code}. Error: ${pyErr}`);
+        alert(`Failed to decode neural video (Code ${code}). Root cause:\n\n${pyErr || "No output"}`)
         document.querySelector('#loading-video').classList.add('hidden')
         return
       }
