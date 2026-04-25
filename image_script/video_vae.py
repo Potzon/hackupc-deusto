@@ -13,10 +13,11 @@ class CustomAutoencoderKL:
         "taesd-fast": "madebyollin/taesd",
     }
 
-    def __init__(self, video_path: str, model_key: str, frame_step: int = 1):
+    def __init__(self, video_path: str, model_key: str, frame_step: int = 1, batch_size: int = 8):
 
         self.video_path = video_path
         self.frame_step = frame_step
+        self.batch_size = batch_size
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.dtype = torch.float16 if self.device == "cuda" else torch.float32
@@ -34,6 +35,14 @@ class CustomAutoencoderKL:
         print(f"Using model: {model_id}")
         print(f"Device: {self.device}, dtype: {self.dtype}")
 
+    @staticmethod
+    def tensor_size_mb(tensor):
+        """Calculate tensor size in MB."""
+        return tensor.element_size() * tensor.nelement() / (1024 ** 2)
+
+    def image_size_mb(self, image):
+        """Calculate image size in MB."""
+        return image.nbytes / (1024 ** 2)
 
     def preprocess_frame(self, frame_bgr):
         image = Image.fromarray(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB))
@@ -46,7 +55,9 @@ class CustomAutoencoderKL:
 
         image_np = np.array(image).astype(np.float32) / 255.0
         image_np = (image_np * 2.0) - 1.0  # scale to [-1, 1]
+        print(f"  original frame: {self.image_size_mb(image_np):.2f} MB")
         image_tensor = torch.tensor(image_np, dtype=self.dtype).permute(2, 0, 1).unsqueeze(0).to(self.device)
+        print(f"  image_tensor: {self.tensor_size_mb(image_tensor):.2f} MB")
         
         return image_tensor
 
@@ -60,12 +71,14 @@ class CustomAutoencoderKL:
                 # Tiny VAEs expose latents directly.
                 latents = encoded.latents
         latents = latents * self.scaling_factor
+        print(f"  latents: {self.tensor_size_mb(latents):.2f} MB")
 
         return latents
 
     def decode(self, latents):
         with torch.inference_mode():
             decoded = self.vae.decode(latents / self.scaling_factor).sample
+        print(f"  decoded: {self.tensor_size_mb(decoded):.2f} MB")
         return decoded
 
     def postprocess_frame(self, decoded):
@@ -75,11 +88,21 @@ class CustomAutoencoderKL:
         
         # Convert back to BGR for OpenCV
         frame_bgr = cv2.cvtColor(decoded, cv2.COLOR_RGB2BGR)
+        print(f"  postprocessed frame: {self.image_size_mb(frame_bgr):.2f} MB")
         return frame_bgr
 
     def _sync_device(self):
         if self.device == "cuda":
             torch.cuda.synchronize()
+            
+    def _process_batch(self, batch_tensors, out_writer):
+        batch_tensor = torch.cat(batch_tensors, dim=0)
+        latents = self.encode(batch_tensor)
+        decoded_batch = self.decode(latents)
+        
+        for i in range(decoded_batch.shape[0]):
+            out_frame = self.postprocess_frame(decoded_batch[i:i+1])
+            out_writer.write(out_frame)
 
     def process_video(self):
         cap = cv2.VideoCapture(self.video_path)
@@ -104,6 +127,7 @@ class CustomAutoencoderKL:
         
         frame_idx = 0
         processed_count = 0
+        batch_tensors = []
         
         print(f"Starting processing: {orig_w}x{orig_h} -> {new_w}x{new_h} @ {out_fps} FPS")
         t0 = time.perf_counter()
@@ -116,17 +140,20 @@ class CustomAutoencoderKL:
             # Only process 1 frame every self.frame_step frames
             if frame_idx % self.frame_step == 0:
                 image_tensor = self.preprocess_frame(frame)
-                latents = self.encode(image_tensor)
-                decoded = self.decode(latents)
-                out_frame = self.postprocess_frame(decoded)
+                batch_tensors.append(image_tensor)
                 
-                out.write(out_frame)
-                processed_count += 1
-                
-                if processed_count % 10 == 0:
+                if len(batch_tensors) == self.batch_size:
+                    self._process_batch(batch_tensors, out)
+                    processed_count += len(batch_tensors)
+                    batch_tensors = []
                     print(f"Processed {processed_count} frames...")
                 
             frame_idx += 1
+            
+        # Process any remaining frames in the last partial batch
+        if len(batch_tensors) > 0:
+            self._process_batch(batch_tensors, out)
+            processed_count += len(batch_tensors)
             
         total_time = time.perf_counter() - t0
         print(f"Finished! Processed {processed_count} frames in {total_time:.2f}s")
@@ -146,14 +173,16 @@ def main():
         help="VAE preset: taesd-fast (fastest), sdxl-fp16 (newer/better), sd15-mse (baseline)",
     )
     parser.add_argument("--frame_step", type=int, default=1, help="Process 1 every N frames. Use 1 to process all frames.")
+    parser.add_argument("--batch_size", type=int, default=30, help="Number of frames to process in a batch.")
 
     args = parser.parse_args()
 
     input_image_path = args.input
     model_key = args.model
     frame_step = args.frame_step
+    batch_size = args.batch_size
 
-    video_encoder = CustomAutoencoderKL(input_image_path, model_key, frame_step)
+    video_encoder = CustomAutoencoderKL(input_image_path, model_key, frame_step, batch_size)
     video_encoder.process_video()
 
 if __name__ == "__main__":
@@ -162,7 +191,7 @@ if __name__ == "__main__":
 """
 usage examples:
 
-python image_script/video_vae.py --input video.mp4 --model taesd-fast --frame_step 3
-python image_script/video_vae.py --input video.mp4 --model sd15-mse --frame_step 3
-python image_script/video_vae.py --input video.mp4 --model sdxl-fp16 --frame_step 3
+python image_script/video_vae.py --input image_script/video.mp4 --model taesd-fast --frame_step 3 --batch_size 30
+python image_script/video_vae.py --input image_script/video.mp4 --model sd15-mse --frame_step 3 --batch_size 30
+python image_script/video_vae.py --input image_script/video.mp4 --model sdxl-fp16 --frame_step 3 --batch_size 30
 """
