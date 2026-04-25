@@ -1,0 +1,15 @@
+{
+  "frame_pixel_num": 230400,
+  "i_frame_num": 1,
+  "p_frame_num": 599,
+  "ave_i_frame_bpp": 0.007395833333333333,
+  "ave_i_frame_psnr": 49.47172367830142,
+  "ave_i_frame_msssim": 0.0,
+  "test_time": 83.58430743217468,
+  "ave_p_frame_bpp": 0.002202919217213875,
+  "ave_p_frame_psnr": 31.989036982552506,
+  "ave_p_frame_msssim": 0.0,
+  "ave_all_frame_bpp": 0.002211574074074074,
+  "ave_all_frame_psnr": 32.018174793712085,
+  "ave_all_frame_msssim": 0.0
+}

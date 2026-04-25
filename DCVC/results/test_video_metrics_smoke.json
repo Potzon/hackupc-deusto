@@ -1,0 +1,26 @@
+{
+  "MP4_DEMO": {
+    "test_video_frames": {
+      "000": {
+        "frame_pixel_num": 230400,
+        "i_frame_num": 1,
+        "p_frame_num": 599,
+        "ave_i_frame_bpp": 0.007396,
+        "ave_i_frame_psnr": 49.471724,
+        "ave_i_frame_msssim": 0.000000,
+        "test_time": 83.584307,
+        "ave_p_frame_bpp": 0.002203,
+        "ave_p_frame_psnr": 31.989037,
+        "ave_p_frame_msssim": 0.000000,
+        "ave_all_frame_bpp": 0.002212,
+        "ave_all_frame_psnr": 32.018175,
+        "ave_all_frame_msssim": 0.000000,
+        "ds_name": "MP4_DEMO",
+        "seq": "test_video_frames",
+        "rate_idx": 0,
+        "qp_i": 3,
+        "qp_p": 3
+      }
+    }
+  }
+}

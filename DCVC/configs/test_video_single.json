@@ -1,0 +1,18 @@
+{
+  "root_path": "/home/lingfeng/Desktop/repos/hackupc-deusto/DCVC",
+  "test_classes": {
+    "MP4_DEMO": {
+      "test": 1,
+      "base_path": "local_data/demo",
+      "src_type": "png",
+      "sequences": {
+        "test_video_frames": {
+          "width": 640,
+          "height": 360,
+          "frames": 9404,
+          "intra_period": -1
+        }
+      }
+    }
+  }
+}
