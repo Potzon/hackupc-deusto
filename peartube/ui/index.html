@@ -194,7 +194,11 @@
             <h2 id="now-playing-title" style="margin: 0; color: #B0D944;">Playing Video</h2>
             <span style="font-size: 0.8rem; color: #888;">Topic: <span id="stream-topic"></span></span>
           </div>
-          <button id="btn-back-gallery">← Back to Feed</button>
+          <div style="display: flex; gap: 10px;">
+            <button id="btn-play-normal">Normal Quality</button>
+            <button id="btn-play-neural" style="border-color: #f39c12; color: #f39c12;">Neural Saved (2% size)</button>
+            <button id="btn-back-gallery">Back to Feed</button>
+          </div>
         </div>
 
         <div id="loading-video" class="hidden" style="margin-bottom: 20px; color:#B0D944; background: #0a290c; padding: 1.5rem; border: 1px solid #B0D944; border-radius: 8px;">
@@ -215,7 +219,10 @@
         <div class="modal-content">
           <h3>Publish to Network</h3>
           <input type="text" id="video-title" placeholder="A catchy video title..." />
-          <input type="file" id="video-file" accept="video/mp4, video/webm" style="padding: 0; border: none;" />
+          <label style="font-size: 0.8rem; margin-top: 10px;">Select Original Video:</label>
+          <input type="file" id="video-file" accept="video/mp4, video/webm" style="padding: 0; border: none; margin-bottom: 0.5rem;" title="Original Video" />
+          <label style="font-size: 0.8rem;">Select Neural Compressed .bin (optional):</label>
+          <input type="file" id="bin-file" accept=".bin" style="padding: 0; border: none;" title="Neural Compressed .bin (optional)" />
           <div class="modal-actions">
             <button id="btn-close-upload" style="border-color: #555; color: #aaa;">Cancel</button>
             <button id="btn-publish-video">Seed & Publish</button>

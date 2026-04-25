@@ -1,0 +1,132 @@
+--- app.js2024-04-26 00:00:00.000000000 +0000
++++ app.js2024-04-26 00:00:00.000000000 +0000
+@@ -51,7 +51,7 @@
+     try {
+       const msg = JSON.parse(b4a.toString(data))
+       if (msg.type === 'new-video') {
+-        addVideoToGallery(msg.title, msg.topic)
++        addVideoToGallery(msg.title, msg.topic, msg.binTopic)
+       } else if (msg.type === 'catalog-sync') {
+         if (msg.videos && Array.isArray(msg.videos)) {
+-          msg.videos.forEach(v => addVideoToGallery(v.title, v.topic))
++          msg.videos.forEach(v => addVideoToGallery(v.title, v.topic, v.binTopic))
+         }
+       }
+     } catch (e) {
+@@ -73,6 +73,8 @@
+ })
+ document.querySelector('#btn-publish-video').addEventListener('click', publishVideo)
+ document.querySelector('#btn-back-gallery').addEventListener('click', () => {
+   document.querySelector('#player-view').classList.add('hidden')
+   document.querySelector('#gallery-view').classList.remove('hidden')
+   document.querySelector('#player').src = "" // Stop video
+ })
++document.querySelector('#btn-play-normal').addEventListener('click', () => startViewerPlayback(false))
++document.querySelector('#btn-play-neural').addEventListener('click', () => startViewerPlayback(true))
+ 
+ // === CORE LOGIC ===
+ 
+ async function publishVideo() {
+   const fileInput = document.querySelector('#video-file')
++  const binInput = document.querySelector('#bin-file')
+   const titleInput = document.querySelector('#video-title')
+   
+   if (!fileInput.files.length && !binInput.files.length) {
+     alert("At least one video or bin file required")
+     return
+   }
+ 
+-  const file = fileInput.files[0]
++  const file = fileInput.files.length ? fileInput.files[0] : null
++  const binFile = binInput.files.length ? binInput.files[0] : null
+   const title = titleInput.value
+   
+   document.querySelector('#upload-modal').classList.add('hidden')
+ 
++  let topicHex = null;
++  let binTopicHex = null;
++
++  if (file) {
+     // Create a hypercore specifically for serving this video's chunks
+     const core = store.get({ name: `video-core-${Date.now()}` })
+     await core.ready()
+     swarm.join(core.discoveryKey, { server: true, client: false })
+-    topicHex = b4a.toString(core.key, 'hex')
++    topicHex = b4a.toString(core.key, 'hex')
+-    
+-  }
+ 
++    // Segment the file and add chunks to Hypercore
++    const chunkSize = 128 * 1024; // 128KB fragments
++    let offset = 0;
++    file.arrayBuffer().then(async (buffer) => {
++      const totalBytes = buffer.byteLength;
++      while (offset < totalBytes) {
++        const chunk = new Uint8Array(buffer, offset, Math.min(chunkSize, totalBytes - offset));
++        await core.append(chunk);
++        offset += chunk.length;
++      }
++      console.log("Seeding complete for mp4:", title);
++    })
++  }
++
++  if (binFile) {
++    const binCore = store.get({ name: `video-core-bin-${Date.now()}` })
++    await binCore.ready()
++    swarm.join(binCore.discoveryKey, { server: true, client: false })
++    binTopicHex = b4a.toString(binCore.key, 'hex')
++    
++    const chunkSize = 128 * 1024; // 128KB fragments
++    let offset = 0;
++    binFile.arrayBuffer().then(async (buffer) => {
++      const totalBytes = buffer.byteLength;
++      while (offset < totalBytes) {
++        const chunk = new Uint8Array(buffer, offset, Math.min(chunkSize, totalBytes - offset));
++        await binCore.append(chunk);
++        offset += chunk.length;
++      }
++      console.log("Seeding complete for bin:", title);
++    })
++  }
++
+   // Add to local gallery
+-  addVideoToGallery(title, topicHex)
++  addVideoToGallery(title, topicHex, binTopicHex)
+ 
+   // Broadcast the metadata payload to all connected peers in the Global Swarm
+-  const msgPayload = JSON.stringify({ type: 'new-video', title, topic: topicHex })
++  const msgPayload = JSON.stringify({ type: 'new-video', title, topic: topicHex, binTopic: binTopicHex })
+   for (const peer of swarm.connections) {
+     peer.write(b4a.from(msgPayload))
+   }
+ }
+ 
+-function addVideoToGallery(title, topic) {
+-  // Prevent duplicate cards
+-  if (document.querySelector(`[data-topic="${topic}"]`)) return;
++function addVideoToGallery(title, topic, binTopic) {
++  const id = topic || binTopic
++  if (document.querySelector(`[data-id="${id}"]`)) return;
+ 
+-  knownVideos.push({ title, topic })
++  knownVideos.push({ title, topic, binTopic })
+ 
+   const grid = document.querySelector('#gallery-grid')
+   
+   const card = document.createElement('div')
+   card.className = 'video-card'
+-  card.dataset.topic = topic
++  card.dataset.id = id
+   card.innerHTML = `
+     <div class="thumbnail">▶</div>
+     <div class="title" title="${title}">${title}</div>
+-    <div class="topic">${topic.substring(0, 10)}...</div>
++    <div class="topic">${(topic ? topic : binTopicHex).substring(0, 10)}...</div>
++    <div class="topic" style="color: #f39c12; margin-top: 5px;">${binTopic ? '🤖 Neural Supported' : 'Standard Quality'}</div>
+   `
+   // Bind click event to play
+-  card.addEventListener('click', () => playVideo(topic, title))
++  card.addEventListener('click', () => playVideo(topic, binTopic, title))
+   
+   grid.prepend(card)
+ }
