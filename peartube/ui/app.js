@@ -73,7 +73,6 @@ document.querySelector('#btn-back-gallery').addEventListener('click', () => {
   document.querySelector('#player-view').classList.add('hidden')
   document.querySelector('#gallery-view').classList.remove('hidden')
   document.querySelector('#player').src = "" // Stop video
-  document.querySelector('#player').classList.remove('neural-enhanced')
 })
 
 // === CORE LOGIC ===
@@ -171,43 +170,33 @@ async function playVideo(topicHex, title) {
 async function startViewerPlayback() {
   const player = document.querySelector('#player')
 
-  // Neural UI effect initialization
-  document.querySelector('#mock-decoding').innerText = '0%'
-  document.querySelector('#mock-refinement').innerText = 'Awaiting connection...'
-  player.classList.remove('neural-enhanced')
-  
-  // Fake Bandwidth AI logic
-  let savings = 60;
-  const metricsInterval = setInterval(() => {
-    savings = Math.min(savings + Math.random() * 5, 99.4)
-    document.querySelector('#mock-bandwidth').innerText = `${savings.toFixed(1)}%`
-  }, 1000)
-
   // Await the network length synchronization
   await currentVideoCore.update()
   const length = currentVideoCore.length
 
   let chunks = []
 
+  const progressBar = document.querySelector('#loading-progress')
+  const progressText = document.querySelector('#loading-percentage')
+  
+  // Reset UI
+  progressBar.value = 0
+  progressText.innerText = '0%'
+
   // Download logic (Wait fully before playing. In production you'd use MSE for streams)
   for (let i = 0; i < length; i++) {
     const block = await currentVideoCore.get(i)
     chunks.push(block)
     
-    // UI Progress update
-    const progress = Math.round((i / length) * 100)
-    document.querySelector('#mock-decoding').innerText = `${progress}%`
-    document.querySelector('#mock-refinement').innerText = `Injecting P2P block [${i}]`
+    // Update progress bar
+    const percent = Math.round(((i + 1) / length) * 100)
+    progressBar.value = percent
+    progressText.innerText = `${percent}%`
   }
 
   // Done downloading
-  clearInterval(metricsInterval)
   document.querySelector('#loading-video').classList.add('hidden')
   document.querySelector('#video-container').classList.remove('hidden')
-  
-  document.querySelector('#mock-decoding').innerText = `100% - Ready`
-  document.querySelector('#mock-refinement').innerText = `Latent video reconstruction finished.`
-  document.querySelector('#player').classList.add('neural-enhanced') // Remove visual blur
 
   const superBuffer = new Blob(chunks, { type: 'video/webm' })
   player.src = URL.createObjectURL(superBuffer)
