@@ -119,10 +119,10 @@ if __name__ == "__main__":
 
     # profiler.enable()
 
-    # start = time.time()
-    # compressor.compress("video.mp4", frames=4211)
-    # end = time.time()
-    # print(f"Compression took {end - start:.2f} seconds")
+    start = time.time()
+    compressor.compress("video.mp4", frames=4211)
+    end = time.time()
+    print(f"Compression took {end - start:.2f} seconds")
 
     start = time.time()
     compressor.decompress(
