@@ -1,10 +1,8 @@
 *.pyc
 .vscode/
 *.bin
-*.png
 *.so
 build/
 *.tar
 *.pyd
 *.egg-info
-*.png
