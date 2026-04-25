@@ -100,6 +100,8 @@ class Compressor:
             str(max_frames),
             "--output_mp4",
             str(output_mp4),
+            "--png_compress_level",
+            "0",
             "--fps",
             "29.97",
             "--cuda",
@@ -115,12 +117,12 @@ if __name__ == "__main__":
     )
     profiler = cProfile.Profile()
 
-    profiler.enable()
+    # profiler.enable()
 
-    start = time.time()
-    compressor.compress("video.mp4", frames=4211)
-    end = time.time()
-    print(f"Compression took {end - start:.2f} seconds")
+    # start = time.time()
+    # compressor.compress("video.mp4", frames=4211)
+    # end = time.time()
+    # print(f"Compression took {end - start:.2f} seconds")
 
     start = time.time()
     compressor.decompress(
@@ -130,9 +132,9 @@ if __name__ == "__main__":
     end = time.time()
     print(f"Decompression took {end - start:.2f} seconds")
 
-    profiler.disable()
+    # profiler.disable()
 
-    stats = pstats.Stats(profiler)
-    stats.strip_dirs()
-    stats.sort_stats("cumtime")
-    stats.print_stats(40)
+    # stats = pstats.Stats(profiler)
+    # stats.strip_dirs()
+    # stats.sort_stats("cumtime")
+    # stats.print_stats(40)

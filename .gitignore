@@ -1,5 +1,4 @@
 ./peartube/node_modules
 peartube/node_modules
 node_modules
-*.png
 *.pth.tar
