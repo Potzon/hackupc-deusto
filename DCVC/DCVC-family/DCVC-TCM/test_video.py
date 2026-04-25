@@ -108,7 +108,7 @@ def run_test(video_net, i_frame_net, args_dict, device):
     start_time = time.time()
     p_frame_number = 0
     overall_p_decoding_time = 0
-    with torch.no_grad():
+    with torch.inference_mode():
         for frame_idx in range(frame_num):
             frame_start_time = time.time()
             x = read_image_to_torch(os.path.join(

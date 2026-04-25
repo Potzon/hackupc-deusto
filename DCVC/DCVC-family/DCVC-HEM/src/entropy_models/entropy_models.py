@@ -124,7 +124,7 @@ class BitEstimator(nn.Module):
 
         self.entropy_coder = entropy_coder
         self.cdf_helper = CdfHelper()
-        with torch.no_grad():
+        with torch.inference_mode():
             device = next(self.parameters()).device
             medians = torch.zeros((self.channel), device=device)
 

@@ -333,8 +333,6 @@ class DMC(CompressionModel):
             self.entropy_coder.flush()
 
         bit_stream = self.entropy_coder.get_encoded_stream()
-
-        torch.cuda.synchronize(device=device)
         self.add_ref_frame(feature, None)
         return {
             'bit_stream': bit_stream,

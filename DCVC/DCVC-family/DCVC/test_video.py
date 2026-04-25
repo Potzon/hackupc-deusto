@@ -116,7 +116,7 @@ def encode_one(args_dict, device):
     else:
         raise ValueError('unknown image naming convention; please specify')
 
-    with torch.no_grad():
+    with torch.inference_mode():
         for frame_idx in range(frame_num):
             ori_frame = read_frame_to_torch(
                 os.path.join(args_dict['dataset_path'],

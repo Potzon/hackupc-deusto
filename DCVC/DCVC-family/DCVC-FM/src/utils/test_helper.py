@@ -151,7 +151,7 @@ def run_one_point_fast(p_frame_net, i_frame_net, args):
     pic_width = args['src_width']
     padding_l, padding_r, padding_t, padding_b = get_padding_size(pic_height, pic_width, 16)
 
-    with torch.no_grad():
+    with torch.inference_mode():
         for frame_idx in range(frame_num):
             frame_start_time = time.time()
             x, y, u, v, rgb = get_src_frame(args, src_reader, device)
@@ -233,7 +233,7 @@ def run_one_point_with_stream(p_frame_net, i_frame_net, args):
     outstanding_sps_bytes = 0
     sps_buffer = []
 
-    with torch.no_grad():
+    with torch.inference_mode():
         for frame_idx in range(frame_num):
             frame_start_time = time.time()
             x, y, u, v, rgb = get_src_frame(args, src_reader, device)
@@ -322,7 +322,7 @@ def run_one_point_with_stream(p_frame_net, i_frame_net, args):
         elif args['src_type'] == 'yuv420':
             recon_writer = YUVWriter(args['curr_rec_path'], args['src_width'], args['src_height'])
     pending_frame_spss = []
-    with torch.no_grad():
+    with torch.inference_mode():
         while decoded_frame_number < frame_num:
             new_stream = False
             if len(pending_frame_spss) == 0:

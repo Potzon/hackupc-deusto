@@ -73,7 +73,7 @@ def flow_warp(im, flow):
 def block_mc_func(im, flow):
     if not CUSTOMIZED_CUDA:
         return flow_warp(im, flow)
-    with torch.no_grad():
+    with torch.inference_mode():
         B, C, H, W = im.size()
         out = torch.empty_like(im)
         block_mc_forward(out, im, flow, B, C, H, W)

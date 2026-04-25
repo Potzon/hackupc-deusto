@@ -167,7 +167,7 @@ def run_one_point_with_stream(p_frame_net, i_frame_net, args):
     sps_helper = SPSHelper()
 
     p_frame_net.set_curr_poc(0)
-    with torch.no_grad():
+    with torch.inference_mode():
         last_qp = 0
         for frame_idx in range(frame_num):
             x, y, u, v, rgb = get_src_frame(args, src_reader, device)
@@ -256,7 +256,7 @@ def run_one_point_with_stream(p_frame_net, i_frame_net, args):
             recon_writer = YUV420Writer(output_yuv_path, args['src_width'], args['src_height'])
 
     p_frame_net.set_curr_poc(0)
-    with torch.no_grad():
+    with torch.inference_mode():
         while decoded_frame_number < frame_num:
             x, y, u, v, rgb = get_src_frame(args, src_reader, device)
             torch.cuda.synchronize(device=device)

@@ -180,7 +180,7 @@ class BitEstimator(nn.Module):
             return
 
         self.entropy_coder = EntropyCoder()
-        with torch.no_grad():
+        with torch.inference_mode():
             device = next(self.parameters()).device
             medians = torch.zeros((self.channel), device=device)
 

@@ -325,7 +325,7 @@ class DMC(CompressionModel):
     def load_state_dict(self, state_dict, strict=True):
         super().load_state_dict(state_dict, strict)
 
-        with torch.no_grad():
+        with torch.inference_mode():
             mv_y_q_scale_enc_fine = np.linspace(np.log(self.mv_y_q_scale_enc[0, 0, 0, 0]),
                                                 np.log(self.mv_y_q_scale_enc[3, 0, 0, 0]), 64)
             self.mv_y_q_scale_enc_fine = np.exp(mv_y_q_scale_enc_fine)

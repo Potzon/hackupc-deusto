@@ -2,7 +2,9 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-
+import cProfile
+import pstats
+import time
 class Compressor:
     def __init__(self, i_model:str, p_model:str, device):
         self.i_model = i_model
@@ -111,5 +113,26 @@ if __name__ == "__main__":
         p_model="models/cvpr2025_video.pth.tar",
         device="cuda"
     )
-    compressor.compress("video.mp4", frames=600)
-    compressor.decompress("out_bin/MP4_DEMO/test_video_frames_q3.bin", "decompressed_video.mp4")
+    profiler = cProfile.Profile()
+
+    profiler.enable()
+
+    start = time.time()
+    compressor.compress("video.mp4", frames=4211)
+    end = time.time()
+    print(f"Compression took {end - start:.2f} seconds")
+
+    start = time.time()
+    compressor.decompress(
+        "out_bin/MP4_DEMO/test_video_frames_q3.bin",
+        "decompressed_video.mp4"
+    )
+    end = time.time()
+    print(f"Decompression took {end - start:.2f} seconds")
+
+    profiler.disable()
+
+    stats = pstats.Stats(profiler)
+    stats.strip_dirs()
+    stats.sort_stats("cumtime")
+    stats.print_stats(40)

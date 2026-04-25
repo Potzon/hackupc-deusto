@@ -44,12 +44,14 @@ def load_models(device, model_path_i, model_path_p, force_zero_thres):
     i_frame_net.load_state_dict(i_state_dict)
     i_frame_net = i_frame_net.to(device).eval()
     i_frame_net.update(force_zero_thres)
+    i_frame_net.half()
 
     p_frame_net = DMC()
     p_state_dict = get_state_dict(model_path_p)
     p_frame_net.load_state_dict(p_state_dict)
     p_frame_net = p_frame_net.to(device).eval()
     p_frame_net.update(force_zero_thres)
+    p_frame_net.half()
 
     if device.startswith("cuda"):
         i_frame_net.half()
@@ -79,7 +81,7 @@ def decode_stream(args, i_frame_net, p_frame_net):
     p_frame_net.set_curr_poc(0)
 
     frame_idx = 0
-    with torch.no_grad():
+    with torch.inference_mode():
         while True:
             if args.max_frames > 0 and frame_idx >= args.max_frames:
                 break
@@ -126,9 +128,6 @@ def decode_stream(args, i_frame_net, p_frame_net):
             frame_idx += 1
             frame_name = os.path.join(args.output_dir, f"im{frame_idx:05d}.png")
             save_png(rgb_np, frame_name)
-
-            if frame_idx % 50 == 0:
-                print(f"decoded {frame_idx} frames")
 
     return frame_idx
 

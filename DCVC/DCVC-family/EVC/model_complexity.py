@@ -13,7 +13,7 @@ class IntraCodec(nn.Module):
         self.model = model
 
     def forward(self, x):
-        with torch.no_grad():
+        with torch.inference_mode():
             result = self.model.forward(x, q_scale=1.0)
         return result
 

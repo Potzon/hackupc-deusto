@@ -131,7 +131,7 @@ def run_test(i_frame_net, args, device):
     frame_pixel_num = 0
 
     start_time = time.time()
-    with torch.no_grad():
+    with torch.inference_mode():
         frame_start_time = time.time()
         rgb = src_reader.read_one_frame(src_format="rgb")
         x = np_image_to_tensor(rgb)

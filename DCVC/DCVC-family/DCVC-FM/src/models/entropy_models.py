@@ -146,7 +146,7 @@ class BitEstimator(AEHelper, nn.Module):
         if not force and self._offset is not None:
             return
 
-        with torch.no_grad():
+        with torch.inference_mode():
             device = next(self.parameters()).device
             medians = torch.zeros((self.qp_num, self.channel, 1, 1), device=device)
             index = torch.arange(self.qp_num, device=device, dtype=torch.int32)

@@ -179,7 +179,7 @@ class CompressionModel(nn.Module):
 
     def get_mask_four_parts(self, batch, channel, height, width, dtype, device):
         curr_mask_str = f"{batch}_{channel}x{width}x{height}"
-        with torch.no_grad():
+        with torch.inference_mode():
             if curr_mask_str not in self.masks:
                 assert channel % 4 == 0
                 m = torch.ones((batch, channel // 4, height, width), dtype=dtype, device=device)

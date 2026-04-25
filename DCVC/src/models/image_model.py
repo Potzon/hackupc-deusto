@@ -176,8 +176,6 @@ class DMCI(CompressionModel):
             self.entropy_coder.flush()
 
         bit_stream = self.entropy_coder.get_encoded_stream()
-
-        torch.cuda.synchronize(device=device)
         result = {
             "bit_stream": bit_stream,
             "x_hat": x_hat,

@@ -158,7 +158,7 @@ class IntraNoAR(CompressionModel):
     def load_state_dict(self, state_dict, strict=True):
         super().load_state_dict(state_dict, strict)
 
-        with torch.no_grad():
+        with torch.inference_mode():
             q_scale_enc_fine = np.linspace(np.log(self.q_scale_enc[0, 0, 0, 0]),
                                            np.log(self.q_scale_enc[3, 0, 0, 0]), 64)
             self.q_scale_enc_fine = np.exp(q_scale_enc_fine)

@@ -104,7 +104,7 @@ def run_test(p_frame_net, i_frame_net, args):
     p_frame_number = 0
     overall_p_encoding_time = 0
     overall_p_decoding_time = 0
-    with torch.no_grad():
+    with torch.inference_mode():
         for frame_idx in range(frame_num):
             frame_start_time = time.time()
             if args['dist_in_yuv420']:
