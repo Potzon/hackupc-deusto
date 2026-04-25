@@ -1,12 +1,82 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pear React App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      --title-bar-height: 42px;
+      padding-top: var(--title-bar-height);
+      background: #1a1a2e;
+      color: #eee;
+      font-family: sans-serif;
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+    #bar {
+      background: rgba(55, 60, 72, 0.6);
+      backdrop-filter: blur(64px);
+      -webkit-app-region: drag;
+      height: var(--title-bar-height);
+      position: fixed;
+      z-index: 2;
+      width: 100%;
+      left: 0;
+      top: 0;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+    h1 { color: #a8ff78; }
+    .section { margin-top: 2rem; }
+    button {
+      background: #a8ff78;
+      color: #1a1a2e;
+      border: none;
+      padding: .5em 1.2em;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: .5rem;
+    }
+    input[type=text] {
+      background: #2a2a3e;
+      color: #eee;
+      border: 1px solid #444;
+      padding: .4em .8em;
+      border-radius: 6px;
+      font-size: 1rem;
+      width: 100%;
+      margin-top: .5rem;
+      box-sizing: border-box;
+    }
+    #share-key {
+      font-family: monospace;
+      font-size: 0.85rem;
+      background: #2a2a3e;
+      padding: .5em;
+      border-radius: 6px;
+      word-break: break-all;
+      margin-top: .5rem;
+      display: none;
+    }
+    #status { margin-top: 1rem; color: #a8ff78; font-size: 0.9rem; }
+  </style>
+  <script type='module' src='./app.js'></script>
+</head>
+<body>
+  <div id="bar"><pear-ctrl></pear-ctrl></div>
+  <h1>🍐 P2P Video Share</h1>
+
+  <div class="section">
+    <h2>Share a video</h2>
+    <button id="pick-file">Pick video file</button>
+    <div id="share-key"></div>
+  </div>
+
+  <div class="section">
+    <h2>Receive a video</h2>
+    <input type="text" id="peer-key" placeholder="Paste share key here..." />
+    <button id="connect-btn">Connect & Download</button>
+  </div>
+
+  <div id="status"></div>
+</body>
 </html>

@@ -6,7 +6,7 @@
     "pre": "pear-electron/pre",
     "name": "pear-app",
     "gui": {
-      "main": "ui/dist/index.html",
+      "main": "ui/index.html",
       "width": 900,
       "height": 500,
       "minWidth": 500
