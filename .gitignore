@@ -2,3 +2,4 @@
 peartube/node_modules
 node_modules
 *.pth.tar
+*.png

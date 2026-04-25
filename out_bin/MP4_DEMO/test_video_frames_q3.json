@@ -1,15 +1,15 @@
 {
   "frame_pixel_num": 230400,
   "i_frame_num": 1,
-  "p_frame_num": 4210,
+  "p_frame_num": 999,
   "ave_i_frame_bpp": 0.007395833333333333,
   "ave_i_frame_psnr": 48.836708770893644,
   "ave_i_frame_msssim": 0.0,
-  "test_time": 189.96486067771912,
-  "ave_p_frame_bpp": 0.004225414027447876,
-  "ave_p_frame_psnr": 28.982110694698086,
+  "test_time": 59.26675295829773,
+  "ave_p_frame_bpp": 0.0029444027360694025,
+  "ave_p_frame_psnr": 30.214838047344866,
   "ave_p_frame_msssim": 0.0,
-  "ave_all_frame_bpp": 0.004226166917332911,
-  "ave_all_frame_psnr": 28.986825631310815,
+  "ave_all_frame_bpp": 0.0029488541666666665,
+  "ave_all_frame_psnr": 30.233459918068416,
   "ave_all_frame_msssim": 0.0
 }

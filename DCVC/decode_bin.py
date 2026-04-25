@@ -3,7 +3,6 @@ import io
 import os
 import shutil
 import subprocess
-from typing import Optional
 
 import numpy as np
 import torch
@@ -23,10 +22,6 @@ def parse_args():
     parser.add_argument("--model_path_p", type=str, required=True)
     parser.add_argument("--output_dir", type=str, default="decoded_frames")
     parser.add_argument("--output_mp4", type=str, default=None)
-    parser.add_argument("--save_png", type=str2bool, default=True)
-    parser.add_argument("--png_compress_level", type=int, default=1)
-    parser.add_argument("--stream_mp4", type=str2bool, default=False)
-    parser.add_argument("--ffmpeg_preset", type=str, default="veryfast")
     parser.add_argument("--fps", type=float, default=29.97)
     parser.add_argument("--max_frames", type=int, default=-1)
     parser.add_argument("--force_zero_thres", type=float, default=None)
@@ -72,57 +67,20 @@ def tensor_to_rgb8(x):
     return rgb_rec
 
 
-def save_png(rgb_np, out_path, compress_level):
-    Image.fromarray(rgb_np.astype(np.uint8), "RGB").save(
-        out_path,
-        compress_level=max(0, min(9, int(compress_level))),
-    )
-
-
-def start_mp4_stream(output_mp4, fps, width, height, ffmpeg_preset):
-    if not shutil.which("ffmpeg"):
-        raise RuntimeError("ffmpeg is required for --stream_mp4 but was not found in PATH")
-
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-f",
-        "rawvideo",
-        "-pix_fmt",
-        "rgb24",
-        "-s:v",
-        f"{width}x{height}",
-        "-r",
-        str(fps),
-        "-i",
-        "-",
-        "-an",
-        "-c:v",
-        "libx264",
-        "-preset",
-        ffmpeg_preset,
-        "-pix_fmt",
-        "yuv420p",
-        "-movflags",
-        "+faststart",
-        output_mp4,
-    ]
-    return subprocess.Popen(cmd, stdin=subprocess.PIPE)
+def save_png(rgb_np, out_path):
+    Image.fromarray(rgb_np.astype(np.uint8), "RGB").save(out_path)
 
 
 def decode_stream(args, i_frame_net, p_frame_net):
     with open(args.bin_path, "rb") as f:
         input_buff = io.BytesIO(f.read())
 
-    if args.save_png:
-        os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
 
     sps_helper = SPSHelper()
     p_frame_net.set_curr_poc(0)
-    mp4_proc: Optional[subprocess.Popen] = None
 
     frame_idx = 0
-    reached_eof = False
     with torch.inference_mode():
         while True:
             if args.max_frames > 0 and frame_idx >= args.max_frames:
@@ -143,13 +101,9 @@ def decode_stream(args, i_frame_net, p_frame_net):
                 sps_helper.add_sps_by_id(sps)
                 marker = input_buff.read(1)
                 if len(marker) == 0:
-                    reached_eof = True
-                    break
+                    return frame_idx
                 input_buff.seek(-1, io.SEEK_CUR)
                 header = read_header(input_buff)
-
-            if reached_eof:
-                break
 
             sps = sps_helper.get_sps_by_id(header["sps_id"])
             if sps is None:
@@ -171,29 +125,9 @@ def decode_stream(args, i_frame_net, p_frame_net):
             x_hat = decoded["x_hat"][:, :, :sps["height"], :sps["width"]]
             rgb_np = tensor_to_rgb8(x_hat)
 
-            if args.stream_mp4:
-                if mp4_proc is None:
-                    mp4_proc = start_mp4_stream(
-                        args.output_mp4,
-                        args.fps,
-                        sps["width"],
-                        sps["height"],
-                        args.ffmpeg_preset,
-                    )
-                if mp4_proc.stdin is None:
-                    raise RuntimeError("ffmpeg stdin is not available for streaming")
-                mp4_proc.stdin.write(np.ascontiguousarray(rgb_np).tobytes())
-
             frame_idx += 1
-            if args.save_png:
-                frame_name = os.path.join(args.output_dir, f"im{frame_idx:05d}.png")
-                save_png(rgb_np, frame_name, args.png_compress_level)
-
-    if mp4_proc is not None:
-        mp4_proc.stdin.close()
-        ret = mp4_proc.wait()
-        if ret != 0:
-            raise RuntimeError(f"ffmpeg streaming process failed with exit code {ret}")
+            frame_name = os.path.join(args.output_dir, f"im{frame_idx:05d}.png")
+            save_png(rgb_np, frame_name)
 
     return frame_idx
 
@@ -224,18 +158,8 @@ def main():
     args = parse_args()
     set_torch_env()
 
-    if args.stream_mp4 and not args.output_mp4:
-        raise ValueError("--stream_mp4 requires --output_mp4")
-    if not args.save_png and not (args.output_mp4 and args.stream_mp4):
-        raise ValueError("No output selected. Use --save_png True or --output_mp4 with --stream_mp4 True")
-    if args.stream_mp4 and args.max_frames > 0:
-        print("warning: --stream_mp4 with --max_frames outputs only the decoded subset")
-
     device = get_device(args)
     print(f"device: {device}")
-
-    if device.startswith("cuda"):
-        torch.backends.cudnn.benchmark = True
 
     i_frame_net, p_frame_net = load_models(
         device,
@@ -246,13 +170,10 @@ def main():
 
     decoded_frames = decode_stream(args, i_frame_net, p_frame_net)
     print(f"decoded frames: {decoded_frames}")
-    if args.save_png:
-        print(f"decoded PNGs: {args.output_dir}")
+    print(f"decoded PNGs: {args.output_dir}")
 
-    if args.output_mp4 and decoded_frames > 0 and not args.stream_mp4:
+    if args.output_mp4 and decoded_frames > 0:
         export_mp4(args.output_dir, args.fps, args.output_mp4)
-        print(f"decoded MP4: {args.output_mp4}")
-    elif args.output_mp4 and decoded_frames > 0 and args.stream_mp4:
         print(f"decoded MP4: {args.output_mp4}")
 
 

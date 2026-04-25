@@ -27,8 +27,10 @@
     "hypercore": "^11.28.1",
     "hyperdrive": "^13.3.2",
     "hyperswarm": "^4.17.0",
+    "nanoassert": "^3.1.0",
     "pear-appdrive": "^1.1.2",
     "pear-bridge": "^1.2.0",
-    "pear-electron": "^1.7.10"
+    "pear-electron": "^1.7.28",
+    "shuffled-priority-queue": "^2.1.0"
   }
 }
