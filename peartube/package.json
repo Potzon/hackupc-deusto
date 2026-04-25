@@ -1,10 +1,10 @@
 {
-  "name": "pear-app",
+  "name": "peartube",
   "main": "index.js",
   "type": "module",
   "pear": {
     "pre": "pear-electron/pre",
-    "name": "pear-app",
+    "name": "peartube",
     "gui": {
       "main": "ui/index.html",
       "width": 900,
@@ -24,6 +24,7 @@
   "dependencies": {
     "b4a": "^1.8.0",
     "corestore": "^7.9.2",
+    "hypercore": "^11.28.1",
     "hyperdrive": "^13.3.2",
     "hyperswarm": "^4.17.0",
     "pear-bridge": "^1.2.0",
