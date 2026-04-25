@@ -1,0 +1,32 @@
+{
+  "name": "pear-app",
+  "main": "index.js",
+  "type": "module",
+  "pear": {
+    "pre": "pear-electron/pre",
+    "name": "pear-app",
+    "gui": {
+      "main": "ui/index.html",
+      "width": 900,
+      "height": 500,
+      "minWidth": 500
+    }
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "pear run -d .",
+    "test": "brittle test/*.test.js"
+  },
+  "devDependencies": {
+    "brittle": "^3.0.0",
+    "pear-interface": "^1.0.0"
+  },
+  "dependencies": {
+    "b4a": "^1.8.0",
+    "corestore": "^7.9.2",
+    "hyperdrive": "^13.3.2",
+    "hyperswarm": "^4.17.0",
+    "pear-bridge": "^1.2.0",
+    "pear-electron": "^1.7.10"
+  }
+}
