@@ -27,6 +27,7 @@
     "hypercore": "^11.28.1",
     "hyperdrive": "^13.3.2",
     "hyperswarm": "^4.17.0",
+    "pear-appdrive": "^1.1.2",
     "pear-bridge": "^1.2.0",
     "pear-electron": "^1.7.10"
   }
