@@ -8,7 +8,7 @@
         "ave_i_frame_bpp": 0.007396,
         "ave_i_frame_psnr": 48.836709,
         "ave_i_frame_msssim": 0.000000,
-        "test_time": 59.266753,
+        "test_time": 43.679235,
         "ave_p_frame_bpp": 0.002944,
         "ave_p_frame_psnr": 30.214838,
         "ave_p_frame_msssim": 0.000000,

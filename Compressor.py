@@ -13,27 +13,27 @@ class Compressor:
 
     def compress(self, input_video_path: str, frames: int):
         repo_root = Path(__file__).resolve().parent
-        frames_dir = repo_root / "DCVC" / "local_data" / "demo" / "test_video_frames"
+        # frames_dir = repo_root / "DCVC" / "local_data" / "demo" / "test_video_frames"
 
-        frames_dir.mkdir(parents=True, exist_ok=True)
-        for entry in frames_dir.iterdir():
-            if entry.is_dir():
-                shutil.rmtree(entry)
-            else:
-                entry.unlink()
+        # frames_dir.mkdir(parents=True, exist_ok=True)
+        # for entry in frames_dir.iterdir():
+        #     if entry.is_dir():
+        #         shutil.rmtree(entry)
+        #     else:
+        #         entry.unlink()
 
-        ffmpeg_path = shutil.which("ffmpeg")
-        if ffmpeg_path is None:
-            raise RuntimeError("ffmpeg is required to extract frames but was not found in PATH")
+        # ffmpeg_path = shutil.which("ffmpeg")
+        # if ffmpeg_path is None:
+        #     raise RuntimeError("ffmpeg is required to extract frames but was not found in PATH")
 
-        extract_cmd = [
-            ffmpeg_path,
-            "-y",
-            "-i",
-            input_video_path,
-            str(frames_dir / "im%05d.png"),
-        ]
-        subprocess.run(extract_cmd, check=True, cwd=repo_root)
+        # extract_cmd = [
+        #     ffmpeg_path,
+        #     "-y",
+        #     "-i",
+        #     input_video_path,
+        #     str(frames_dir / "im%05d.png"),
+        # ]
+        # subprocess.run(extract_cmd, check=True, cwd=repo_root)
 
         python_exec = sys.executable if sys.executable else "python3"
         compress_cmd = [
@@ -117,10 +117,10 @@ if __name__ == "__main__":
 
     # profiler.enable()
 
-    # start = time.time()
-    # compressor.compress("video.mp4", frames=1000)
-    # end = time.time()
-    # print(f"Compression took {end - start:.2f} seconds")
+    start = time.time()
+    compressor.compress("video.mp4", frames=1000)
+    end = time.time()
+    print(f"Compression took {end - start:.2f} seconds")
 
     start = time.time()
     compressor.decompress(

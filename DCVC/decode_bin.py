@@ -1,5 +1,4 @@
 import argparse
-import io
 import os
 import shutil
 import subprocess
@@ -22,6 +21,7 @@ def parse_args():
     parser.add_argument("--model_path_p", type=str, required=True)
     parser.add_argument("--output_dir", type=str, default="decoded_frames")
     parser.add_argument("--output_mp4", type=str, default=None)
+    parser.add_argument("--png_compress_level", type=int, default=1)
     parser.add_argument("--fps", type=float, default=29.97)
     parser.add_argument("--max_frames", type=int, default=-1)
     parser.add_argument("--force_zero_thres", type=float, default=None)
@@ -67,67 +67,69 @@ def tensor_to_rgb8(x):
     return rgb_rec
 
 
-def save_png(rgb_np, out_path):
-    Image.fromarray(rgb_np.astype(np.uint8), "RGB").save(out_path)
+def save_png(rgb_np, out_path, compress_level):
+    Image.fromarray(rgb_np.astype(np.uint8), "RGB").save(
+        out_path,
+        compress_level=max(0, min(9, int(compress_level))),
+        optimize=False,
+    )
 
 
 def decode_stream(args, i_frame_net, p_frame_net):
-    with open(args.bin_path, "rb") as f:
-        input_buff = io.BytesIO(f.read())
-
     os.makedirs(args.output_dir, exist_ok=True)
 
     sps_helper = SPSHelper()
     p_frame_net.set_curr_poc(0)
 
     frame_idx = 0
-    with torch.inference_mode():
-        while True:
-            if args.max_frames > 0 and frame_idx >= args.max_frames:
-                break
+    with open(args.bin_path, "rb", buffering=4 * 1024 * 1024) as input_buff:
+        with torch.inference_mode():
+            while True:
+                if args.max_frames > 0 and frame_idx >= args.max_frames:
+                    break
 
-            marker = input_buff.read(1)
-            if len(marker) == 0:
-                break
-            input_buff.seek(-1, io.SEEK_CUR)
-
-            try:
-                header = read_header(input_buff)
-            except Exception:
-                break
-
-            while header["nal_type"] == NalType.NAL_SPS:
-                sps = read_sps_remaining(input_buff, header["sps_id"])
-                sps_helper.add_sps_by_id(sps)
                 marker = input_buff.read(1)
                 if len(marker) == 0:
-                    return frame_idx
-                input_buff.seek(-1, io.SEEK_CUR)
-                header = read_header(input_buff)
+                    break
+                input_buff.seek(-1, os.SEEK_CUR)
 
-            sps = sps_helper.get_sps_by_id(header["sps_id"])
-            if sps is None:
-                raise RuntimeError(f"SPS id {header['sps_id']} was not found in stream")
+                try:
+                    header = read_header(input_buff)
+                except Exception:
+                    break
 
-            qp, bit_stream = read_ip_remaining(input_buff)
+                while header["nal_type"] == NalType.NAL_SPS:
+                    sps = read_sps_remaining(input_buff, header["sps_id"])
+                    sps_helper.add_sps_by_id(sps)
+                    marker = input_buff.read(1)
+                    if len(marker) == 0:
+                        return frame_idx
+                    input_buff.seek(-1, os.SEEK_CUR)
+                    header = read_header(input_buff)
 
-            if header["nal_type"] == NalType.NAL_I:
-                decoded = i_frame_net.decompress(bit_stream, sps, qp)
-                p_frame_net.clear_dpb()
-                p_frame_net.add_ref_frame(None, decoded["x_hat"])
-            elif header["nal_type"] == NalType.NAL_P:
-                if sps["use_ada_i"]:
-                    p_frame_net.reset_ref_feature()
-                decoded = p_frame_net.decompress(bit_stream, sps, qp)
-            else:
-                raise RuntimeError(f"Unsupported NAL type in stream: {header['nal_type']}")
+                sps = sps_helper.get_sps_by_id(header["sps_id"])
+                if sps is None:
+                    raise RuntimeError(f"SPS id {header['sps_id']} was not found in stream")
 
-            x_hat = decoded["x_hat"][:, :, :sps["height"], :sps["width"]]
-            rgb_np = tensor_to_rgb8(x_hat)
+                qp, bit_stream = read_ip_remaining(input_buff)
 
-            frame_idx += 1
-            frame_name = os.path.join(args.output_dir, f"im{frame_idx:05d}.png")
-            save_png(rgb_np, frame_name)
+                if header["nal_type"] == NalType.NAL_I:
+                    decoded = i_frame_net.decompress(bit_stream, sps, qp)
+                    p_frame_net.clear_dpb()
+                    p_frame_net.add_ref_frame(None, decoded["x_hat"])
+                elif header["nal_type"] == NalType.NAL_P:
+                    if sps["use_ada_i"]:
+                        p_frame_net.reset_ref_feature()
+                    decoded = p_frame_net.decompress(bit_stream, sps, qp)
+                else:
+                    raise RuntimeError(f"Unsupported NAL type in stream: {header['nal_type']}")
+
+                x_hat = decoded["x_hat"][:, :, :sps["height"], :sps["width"]]
+                rgb_np = tensor_to_rgb8(x_hat)
+
+                frame_idx += 1
+                frame_name = os.path.join(args.output_dir, f"im{frame_idx:05d}.png")
+                save_png(rgb_np, frame_name, args.png_compress_level)
 
     return frame_idx
 
