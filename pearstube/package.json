@@ -1,0 +1,31 @@
+{
+  "name": "pearstube",
+  "version": "0.1.0",
+  "description": "Censorship-resistant P2P video on Pear building blocks with AI-compressed bin streams",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n backend,vite -c green,cyan \"npm:dev:backend\" \"npm:dev:ui\"",
+    "dev:backend": "node server.js",
+    "dev:ui": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "autobase": "^7.27.3",
+    "b4a": "^1.8.0",
+    "corestore": "^7.9.2",
+    "hyperbee": "^2.27.3",
+    "hypercore-crypto": "^3.6.1",
+    "hyperdrive": "^13.3.2",
+    "hyperswarm": "^4.17.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^9.2.1",
+    "vite": "^5.4.21"
+  }
+}
