@@ -96,7 +96,7 @@ document.querySelector('#btn-save-settings').addEventListener('click', () => {
   if (iInputText.value) localStorage.setItem('iModelPath', iInputText.value)
   if (pInputText.value) localStorage.setItem('pModelPath', pInputText.value)
   
-  alert('AI Models configured! We will use Docker to mount these on playback.');
+  alert('AI Models configured! We will use the local Python env to run the neural playback.');
   document.querySelector('#settings-modal').classList.add('hidden');
 })
 document.querySelector('#btn-publish-video').addEventListener('click', publishVideo)
@@ -258,7 +258,7 @@ async function startViewerPlayback(targetTopic, isNeural) {
   const superBuffer = new Blob(chunks, { type: isNeural ? 'application/octet-stream' : 'video/mp4' })
   
   if (isNeural) {
-    progressText.innerText = "P2P completed. Decoding 2% Neural Payload with AI (Docker)..."
+    progressText.innerText = "P2P completed. Decoding 2% Neural Payload with local Python..."
     progressBar.removeAttribute('value')
     
     // Save to temp and decode
@@ -278,21 +278,11 @@ async function startViewerPlayback(targetTopic, isNeural) {
       return;
     }
 
-    const dockerArgs = [
-      'run', '--rm',
-      '--gpus', 'all', // Require GPU for Neural processing
-      '-v', `${tempDir}:/data`,
-      '-v', `${iPath}:/app/models/cvpr2025_image.pth.tar`,
-      '-v', `${pPath}:/app/models/cvpr2025_video.pth.tar`,
-      // Assuming docker image 'neural-decoder' is already built by the user.
-      'neural-decoder', 
-      'decompress', 
-      `/data/${targetTopic}.bin`, 
-      `/data/${targetTopic}.mp4`
-    ]
+    const pythonPath = '/home/lingfeng/Desktop/venv/pytorch/bin/python';
+    const pyArgs = ['cli.py', 'decompress', binPath, mp4Path, iPath, pPath];
     
-    console.log("Spawning Docker container:", ['docker', ...dockerArgs].join(" "));
-    const py = spawn('docker', dockerArgs, { cwd: repoRoot })
+    console.log("Spawning Python:", pythonPath, pyArgs.join(" "));
+    const py = spawn(pythonPath, pyArgs, { cwd: repoRoot })
     
     let pyErr = '';
     py.stderr.on('data', (data) => {

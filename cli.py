@@ -7,9 +7,12 @@ if __name__ == "__main__":
     
     repo_root = os.path.dirname(os.path.abspath(__file__))
     
+    i_model = sys.argv[4] if len(sys.argv) > 4 else os.path.join(repo_root, "models/cvpr2025_image.pth.tar")
+    p_model = sys.argv[5] if len(sys.argv) > 5 else os.path.join(repo_root, "models/cvpr2025_video.pth.tar")
+
     compressor = Compressor(
-        i_model=os.path.join(repo_root, "models/cvpr2025_image.pth.tar"),
-        p_model=os.path.join(repo_root, "models/cvpr2025_video.pth.tar"),
+        i_model=i_model,
+        p_model=p_model,
         device="cuda"
     )
     if action == "compress":
