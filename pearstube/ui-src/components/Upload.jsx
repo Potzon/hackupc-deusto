@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { api, on } from './../api.js'
 
 export default function Upload({ onDone, onError }) {
+  const fileInputRef = useRef(null)
   const [path, setPath] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -18,6 +19,25 @@ export default function Upload({ onDone, onError }) {
       setPath(r.path)
       if (!title) setTitle('Sample video')
     } catch (e) { onError(e.message || String(e)) }
+  }
+
+  function pickFile() {
+    fileInputRef.current?.click()
+  }
+
+  function onFileSelected(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    // Electron/Bare exposes absolute file paths on File.path.
+    const selectedPath = file.path || ''
+    setPath(selectedPath)
+    if (!title) {
+      const base = file.name.replace(/\.[^.]+$/, '')
+      if (base) setTitle(base)
+    }
+    if (!selectedPath) {
+      onError('No pude leer la ruta absoluta del archivo. Prueba en la app Pear o usa el sample.')
+    }
   }
 
   async function publish() {
@@ -45,19 +65,18 @@ export default function Upload({ onDone, onError }) {
       </p>
       <div className="upload-form">
         <div>
-          <label>Source video — absolute path on this machine</label>
+          <label>Source video</label>
           <div className="file-pick">
-            <input
-              value={path}
-              onChange={(e) => setPath(e.target.value)}
-              placeholder="/home/you/Videos/clip.mp4"
-              style={{ flex: 1 }}
-            />
+            <input ref={fileInputRef} type="file" accept="video/*" onChange={onFileSelected} style={{ display: 'none' }} />
+            <button className="ghost" onClick={pickFile}>Explorar…</button>
+            <div className="path" title={path || 'Ningún archivo seleccionado'}>
+              {path || 'Ningún archivo seleccionado'}
+            </div>
             <button className="ghost" onClick={loadSample}>Use bundled sample</button>
           </div>
           <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>
-            Browsers can't read absolute paths from a file picker. Paste a path here, or click the
-            sample button to point at <code>hackupc-deusto/video.mp4</code>.
+            Selecciona un archivo de video desde el explorador del sistema. Si falla la ruta absoluta,
+            usa el sample para probar: <code>hackupc-deusto/video.mp4</code>.
           </div>
         </div>
         <div>

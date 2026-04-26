@@ -6,7 +6,21 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function compressorRepo() {
-  return path.resolve(__dirname, '..', '..', 'hackupc-deusto')
+  const override = process.env.PEARSTUBE_COMPRESSOR_REPO
+  if (override) return path.resolve(override)
+
+  const appRoot = path.resolve(__dirname, '..', '..')
+  const candidates = [
+    appRoot,
+    path.join(appRoot, 'hackupc-deusto'),
+    path.resolve(appRoot, '..', 'hackupc-deusto')
+  ]
+
+  for (const repo of candidates) {
+    if (fs.existsSync(path.join(repo, 'cli.py'))) return repo
+  }
+
+  return appRoot
 }
 
 const PYTHON = process.env.PEARSTUBE_PYTHON || 'python3'

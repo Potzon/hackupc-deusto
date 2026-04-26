@@ -6,8 +6,8 @@ export default defineConfig({
   root: resolve(__dirname, 'ui-src'),
   plugins: [react()],
   server: {
-    port: 5173,
-    strictPort: true,
+    port: Number(process.env.PEARSTUBE_UI_PORT || 5173),
+    strictPort: false,
     host: 'localhost'
   },
   build: {

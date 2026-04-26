@@ -1,7 +1,6 @@
 import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { WebSocketServer } from 'ws'
 import { State } from './lib/state.js'
@@ -9,9 +8,9 @@ import { attachWebSocket } from './lib/protocol.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const PORT = Number(process.env.PEARSTUBE_PORT || 8787)
+const BASE_PORT = Number(process.env.PEARSTUBE_PORT || 8787)
 const STORAGE_DIR = process.env.PEARSTUBE_STORAGE
-  || path.join(os.homedir(), '.pearstube', 'default')
+  || path.join(__dirname, '.pearstube', 'default')
 const PLAYBACK_CACHE = path.join(STORAGE_DIR, 'playback-cache')
 
 fs.mkdirSync(STORAGE_DIR, { recursive: true })
@@ -58,8 +57,22 @@ wss.on('connection', (ws) => {
   ws.on('close', () => console.log('[pearstube] UI disconnected'))
 })
 
-server.listen(PORT, () => {
-  console.log(`[pearstube] backend listening on http://localhost:${PORT}`)
+server.on('error', (err) => {
+  if (err && err.code === 'EADDRINUSE') {
+    const trying = nextPort + 1
+    console.warn(`[pearstube] port ${nextPort} busy, trying ${trying}`)
+    nextPort = trying
+    server.listen(nextPort)
+    return
+  }
+  throw err
+})
+
+let nextPort = BASE_PORT
+server.listen(nextPort, () => {
+  const addr = server.address()
+  const port = typeof addr === 'object' && addr ? addr.port : nextPort
+  console.log(`[pearstube] backend listening on http://localhost:${port}`)
   console.log(`[pearstube] open the Vite dev URL in your browser`)
 })
 
