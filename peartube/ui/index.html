@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      pear-ctrl[data-platform="darwin"] { margin-top: 12px; margin-left: 10px; }
+
+      #titlebar {
+        -webkit-app-region: drag;
+        height: 30px;
+        width: 100%;
+        position: fixed;
+        left: 0;
+        top: 0;
+        background-color: #B0D94413;
+        filter: drop-shadow(2px 10px 6px #888);
+        z-index: 100;
+      }
+
+      button, input {
+        all: unset;
+        border: 1px ridge #B0D944;
+        background: #000;
+        color: #B0D944;
+        padding: .45rem;
+        font-family: monospace;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      
+      button:hover {
+        background: #B0D94433;
+      }
+
+      body {
+        background-color: #001601;
+        font-family: monospace;
+        margin: 0;
+        padding: 0;
+        color: white;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* Navbar */
+      #navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 2rem;
+        background: #0a290c;
+        border-bottom: 1px solid #B0D944;
+        margin-top: 30px; /* Space for titlebar */
+      }
+      .brand { font-size: 1.5rem; font-weight: bold; color: #B0D944; }
+
+      /* Gallery View */
+      #gallery-view {
+        padding: 2rem;
+      }
+      #gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.5rem;
+      }
+      .video-card {
+        background: #051406;
+        border: 1px solid #1a4a1c;
+        border-radius: 6px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .video-card:hover {
+        border-color: #B0D944;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(176, 217, 68, 0.1);
+      }
+      .video-card .thumbnail {
+        height: 120px;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #B0D944;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+        border: 1px solid #222;
+      }
+      .video-card .title {
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .video-card .topic {
+        font-size: 0.8rem;
+        color: #888;
+      }
+
+      /* Upload Modal & Settings Modal */
+      #upload-modal, #settings-modal {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 22, 1, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+      }
+      .modal-content {
+        background: #0a290c;
+        padding: 2rem;
+        border-radius: 8px;
+        border: 1px solid #B0D944;
+        display: flex;
+        flex-direction: column;
+        width: 400px;
+      }
+      .modal-content h3 { margin-top: 0; color: #B0D944; }
+      .modal-content input { margin-bottom: 1rem; width: 95%; }
+      .modal-actions { display: flex; justify-content: space-between; margin-top: 1rem; }
+
+      /* Player View */
+      #player-view {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 100px);
+        padding: 1rem;
+      }
+      
+      #player-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      #video-container {
+        flex: 1;
+        display: flex;
+        position: relative;
+        justify-content: center;
+        background: #000;
+        border: 2px solid #555;
+        overflow: hidden;
+      }
+
+      #player {
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      progress {
+        accent-color: #B0D944;
+        width: 100%;
+        height: 10px;
+        margin-top: 10px;
+      }
+
+    </style>
+    <script type='module' src='./app.js'></script>
+  </head>
+  <body>
+    <div id="titlebar">
+      <pear-ctrl></pear-ctrl>
+    </div>
+    
+    <nav id="navbar">
+      <div class="brand">PearTube <span style="font-size:0.8rem;color:#888;">Neural P2P CDN</span></div>
+      <div>
+        <span style="font-size: 0.9rem; margin-right: 15px;">Network Peers: <span id="global-peers">0</span></span>
+        <button id="btn-show-settings" style="margin-right: 10px;">⚙ AI Settings</button>
+        <button id="btn-show-upload">Upload Video</button>
+      </div>
+    </nav>
+
+    <main>
+      <!-- GALLERY VIEW -->
+      <div id="gallery-view">
+        <h2 style="margin-top:0;">Global Discovery Feed</h2>
+        <div id="gallery-grid">
+          <!-- Video cards inject here -->
+        </div>
+      </div>
+
+      <!-- Settings Modal -->
+      <div id="settings-modal" class="hidden">
+        <div class="modal-content">
+          <h3>AI Models Setup</h3>
+          <p style="font-size: 0.8rem; color: #888;">Select your pretrained PyTorch (.pth.tar) models to enable Neural Playback via Docker.</p>
+          <label>Image Model (.pth.tar)</label>
+          <input type="text" id="i-model-path-text" placeholder="Path will appear here" style="margin-bottom: 0.2rem;">
+          <input type="file" id="i-model-file" accept=".pth.tar">
+          
+          <label>Video Model (.pth.tar)</label>
+          <input type="text" id="p-model-path-text" placeholder="Path will appear here" style="margin-bottom: 0.2rem;">
+          <input type="file" id="p-model-file" accept=".pth.tar">
+          
+          <div class="modal-actions">
+            <button id="btn-save-settings" style="color:#B0D944; border-color:#B0D944;">Save Changes</button>
+            <button id="btn-close-settings">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLAYER VIEW -->
+      <div id="player-view" class="hidden">
+        <div id="player-header">
+          <div>
+            <h2 id="now-playing-title" style="margin: 0; color: #B0D944;">Playing Video</h2>
+            <span style="font-size: 0.8rem; color: #888;">Topic: <span id="stream-topic"></span></span>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button id="btn-play-normal">Normal Quality</button>
+            <button id="btn-play-neural" style="border-color: #f39c12; color: #f39c12;">Neural Saved (2% size)</button>
+            <button id="btn-back-gallery">Back to Feed</button>
+          </div>
+        </div>
+
+        <div id="loading-video" class="hidden" style="margin-bottom: 20px; color:#B0D944; background: #0a290c; padding: 1.5rem; border: 1px solid #B0D944; border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>Downloading from P2P Swarm...</span>
+            <span id="loading-percentage">0%</span>
+          </div>
+          <progress id="loading-progress" value="0" max="100"></progress>
+        </div>
+
+        <div id="video-container">
+          <video id="player" controls></video>
+        </div>
+      </div>
+
+      <!-- UPLOAD MODAL -->
+      <div id="upload-modal" class="hidden">
+        <div class="modal-content">
+          <h3>Publish to Network</h3>
+          <input type="text" id="video-title" placeholder="A catchy video title..." />
+          <label style="font-size: 0.8rem; margin-top: 10px;">Select Original Video:</label>
+          <input type="file" id="video-file" accept="video/mp4, video/webm" style="padding: 0; border: none; margin-bottom: 0.5rem;" title="Original Video" />
+          <label style="font-size: 0.8rem;">Select Neural Compressed .bin (optional):</label>
+          <input type="file" id="bin-file" accept=".bin" style="padding: 0; border: none;" title="Neural Compressed .bin (optional)" />
+          <div class="modal-actions">
+            <button id="btn-close-upload" style="border-color: #555; color: #aaa;">Cancel</button>
+            <button id="btn-publish-video">Seed & Publish</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </body>
+</html>
